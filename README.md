@@ -4,7 +4,7 @@ A modern personal website built with React, TypeScript, Vite, and styled with Ta
 
 ## 🚀 Tech Stack
 
-- **Frontend**: React 19 with TypeScript
+- **Frontend**: React 24 with TypeScript
 - **Build Tool**: Vite 7
 - **Styling**: Tailwind CSS 4
 - **Linting**: ESLint with TypeScript support
@@ -14,8 +14,8 @@ A modern personal website built with React, TypeScript, Vite, and styled with Ta
 
 ### Prerequisites
 
-- Node.js 20 or higher
-- npm or yarn
+- Node.js 24 or higher
+- npm
 
 ### Getting Started
 
@@ -91,7 +91,7 @@ docker build -f Dockerfile.secure -t personal-website-secure .
 ```
 personal-website/
 ├── public/
-│   ├── images/           # Static images
+│   ├── images/          # Static images
 │   └── vite.svg         # Vite logo
 ├── src/
 │   ├── components/      # React components
@@ -104,9 +104,8 @@ personal-website/
 │   ├── App.tsx          # Main application component
 │   ├── Context.tsx      # React context
 │   ├── main.tsx         # Application entry point
-│   └── *.css           # Styling files
+│   └── *.css            # Styling files
 ├── Dockerfile           # Docker configuration
-├── Dockerfile.secure    # Alternative secure Docker config
 └── package.json         # Dependencies and scripts
 ```
 
