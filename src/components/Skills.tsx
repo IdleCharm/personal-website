@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
 import { CodeIcon, DatabaseIcon, GlobeIcon, SmartphoneIcon } from "./Icons";
 import { Loader } from "./Loader";
@@ -43,7 +43,7 @@ const fetchSkills = async (
   setLoading: React.Dispatch<React.SetStateAction<boolean>>
 ) => {
   try {
-    const response = await fetch("http://localhost:3001/api/skills");
+    const response = await fetch("/api/skills");
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }

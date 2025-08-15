@@ -27,7 +27,7 @@ export function ResumeButton() {
   return (
     <button
       className="inline-flex items-center justify-center border border-purple-400 text-purple-400 hover:bg-purple-400 hover:text-white px-8 py-3 rounded-full text-lg font-semibold transition-all duration-300"
-      onClick={() => window.open("http://localhost:3001/api/resume", "_blank")}
+      onClick={() => window.open("/api/resume", "_blank")}
     >
       <ExternalLinkIcon className="mr-2 h-5 w-5" />
       View Resume
