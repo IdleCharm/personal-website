@@ -10,7 +10,7 @@ export function AboutMeButton() {
   return (
     // TODO: Replace with Modal
     <button
-      className="inline-flex items-center justify-center bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-3 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+      className="inline-flex items-center justify-center bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-3 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
       onClick={() => {
         const aboutSection = document.getElementById("about");
         if (aboutSection) {
@@ -23,11 +23,12 @@ export function AboutMeButton() {
     </button>
   );
 }
+
 export function ResumeButton() {
   return (
     <button
-      className="inline-flex items-center justify-center border border-purple-400 text-purple-400 hover:bg-purple-400 hover:text-white px-8 py-3 rounded-full text-lg font-semibold transition-all duration-300"
-      onClick={() => window.open("/api/resume", "_blank")}
+      className="inline-flex items-center justify-center border border-purple-400 text-purple-400 hover:bg-purple-400 hover:text-white px-8 py-3 rounded-full text-lg font-semibold transition-all duration-300 cursor-pointer"
+      onClick={() => window.open("/api/resume", "_blank", "noopener,noreferrer")}
     >
       <ExternalLinkIcon className="mr-2 h-5 w-5" />
       View Resume
@@ -35,11 +36,29 @@ export function ResumeButton() {
   );
 }
 
+export function ContactMeButton() {
+  return (
+    <button
+      className="inline-flex items-center justify-center border border-pink-400 text-pink-400 hover:bg-pink-400 hover:text-white px-8 py-3 rounded-full text-lg font-semibold transition-all duration-300 cursor-pointer"
+      onClick={() => {
+        const contactSection = document.getElementById("contact");
+        if (contactSection) {
+          contactSection.scrollIntoView({ behavior: "smooth" });
+        }
+      }}
+    >
+      <MailIcon className="mr-2 h-5 w-5" />
+      Get In Touch
+    </button>
+  );
+}
+
 export function GitHubButton() {
   return (
     <button
-      className="inline-flex items-center justify-center text-gray-400 hover:text-purple-400 hover:bg-purple-400/10 rounded-full p-3 transition-all duration-300"
-      onClick={() => window.open("https://github.com/IdleCharm", "_blank")}
+      aria-label="GitHub Profile"
+      className="inline-flex items-center justify-center text-gray-400 hover:text-purple-400 hover:bg-purple-400/10 rounded-full p-3 transition-all duration-300 cursor-pointer"
+      onClick={() => window.open("https://github.com/IdleCharm", "_blank", "noopener,noreferrer")}
     >
       <GithubIcon />
     </button>
@@ -49,9 +68,10 @@ export function GitHubButton() {
 export function LinkedInButton() {
   return (
     <button
-      className="inline-flex items-center justify-center text-gray-400 hover:text-blue-400 hover:bg-blue-400/10 rounded-full p-3 transition-all duration-300"
+      aria-label="LinkedIn Profile"
+      className="inline-flex items-center justify-center text-gray-400 hover:text-blue-400 hover:bg-blue-400/10 rounded-full p-3 transition-all duration-300 cursor-pointer"
       onClick={() =>
-        window.open("https://www.linkedin.com/in/mhenry01/", "_blank")
+        window.open("https://www.linkedin.com/in/mhenry01/", "_blank", "noopener,noreferrer")
       }
     >
       <LinkedInIcon />
@@ -62,8 +82,16 @@ export function LinkedInButton() {
 export function MailButton() {
   return (
     <button
-      className="inline-flex items-center justify-center text-gray-400 hover:text-green-400 hover:bg-green-400/10 rounded-full p-3 transition-all duration-300"
-      onClick={() => (window.location.href = "mailto:hello@michaelhenry.me")}
+      aria-label="Contact Section"
+      className="inline-flex items-center justify-center text-gray-400 hover:text-green-400 hover:bg-green-400/10 rounded-full p-3 transition-all duration-300 cursor-pointer"
+      onClick={() => {
+        const contactSection = document.getElementById("contact");
+        if (contactSection) {
+          contactSection.scrollIntoView({ behavior: "smooth" });
+        } else {
+          window.location.href = "mailto:hello@michaelhenry.me";
+        }
+      }}
     >
       <MailIcon className="h-6 w-6" />
     </button>

@@ -1,0 +1,141 @@
+name: Personal Website — Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      target_host:
+        description: "Target deployment host (optional override, defaults to secret DEPLOY_HOST)"
+        type: string
+        required: false
+      ssh_user:
+        description: "SSH user on target host (optional override, defaults to secret DEPLOY_SSH_USER)"
+        type: string
+        required: false
+
+concurrency:
+  group: deploy-personal-website
+  cancel-in-progress: false
+
+jobs:
+  # ─────────────────────────────────────────────────────────────
+  # 1. Build & Lint Verification
+  # ─────────────────────────────────────────────────────────────
+  verify:
+    name: Build & Lint Verification
+    runs-on: self-hosted
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js (24+)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run TypeScript & Vite Build
+        run: npm run build
+
+  # ─────────────────────────────────────────────────────────────
+  # 2. Deploy to Host via SSH
+  # ─────────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy via SSH
+    needs: [verify]
+    runs-on: [self-hosted, linux]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup SSH Deploy Key
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY || secrets.DEPLOYER_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          ID_KEY="$HOME/.ssh/id_deployer"
+
+          if [ -n "${SSH_PRIVATE_KEY:-}" ]; then
+            echo "$SSH_PRIVATE_KEY" > "$ID_KEY"
+            echo "✓ Using SSH private key from GitHub Secrets"
+          elif [ -f "$HOME/.ssh/id_ed25519" ]; then
+            cp "$HOME/.ssh/id_ed25519" "$ID_KEY"
+            echo "✓ Using runner default Ed25519 key"
+          elif [ -f "$HOME/.ssh/id_rsa" ]; then
+            cp "$HOME/.ssh/id_rsa" "$ID_KEY"
+            echo "✓ Using runner default RSA key"
+          else
+            echo "::error::No SSH deployment key found in secrets or runner ~/.ssh"
+            exit 1
+          fi
+
+          chmod 600 "$ID_KEY"
+
+      - name: Deploy to Host via SSH
+        env:
+          TARGET_HOST: ${{ inputs.target_host || secrets.DEPLOY_HOST || vars.DEPLOY_HOST }}
+          SSH_USER: ${{ inputs.ssh_user || secrets.DEPLOY_SSH_USER || vars.DEPLOY_SSH_USER }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH || vars.DEPLOY_PATH || '/opt/personal-website' }}
+        run: |
+          if [ -z "$TARGET_HOST" ]; then
+            echo "::error::Target host not configured. Please define DEPLOY_HOST in GitHub Secrets."
+            exit 1
+          fi
+
+          if [ -z "$SSH_USER" ]; then
+            echo "::error::SSH user not configured. Please define DEPLOY_SSH_USER in GitHub Secrets."
+            exit 1
+          fi
+
+          SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=20 -i $HOME/.ssh/id_deployer"
+
+          echo "📡 Verifying connectivity to ${SSH_USER}@${TARGET_HOST}..."
+          ssh $SSH_OPTS "${SSH_USER}@${TARGET_HOST}" 'echo "SSH_CONNECTED"'
+
+          echo "🚀 Executing remote deployment script on ${TARGET_HOST}..."
+          ssh $SSH_OPTS "${SSH_USER}@${TARGET_HOST}" "DEPLOY_DIR=\"$DEPLOY_PATH\" bash -s" << 'REMOTE_SCRIPT'
+            set -euo pipefail
+
+            DEPLOY_TARGET="${DEPLOY_DIR:-/opt/personal-website}"
+            if [ ! -d "$DEPLOY_TARGET" ]; then
+              echo "Creating deployment directory at $DEPLOY_TARGET..."
+              sudo mkdir -p "$DEPLOY_TARGET"
+              sudo chown -R $(whoami):$(whoami) "$DEPLOY_TARGET"
+              git clone https://github.com/IdleCharm/personal-website.git "$DEPLOY_TARGET"
+            fi
+
+            echo "📁 Entering $DEPLOY_TARGET..."
+            cd "$DEPLOY_TARGET"
+
+            echo "⬇️ Pulling latest changes from origin/main..."
+            git fetch origin main
+            git reset --hard origin/main
+
+            echo "🐳 Updating Docker containers..."
+            docker compose up -d --build --remove-orphans
+
+            echo "🩺 Verifying container health..."
+            sleep 5
+            for i in {1..20}; do
+              if docker compose ps | grep -q "healthy" || curl -s -f http://localhost:8080/ >/dev/null 2>&1 || curl -s -f http://localhost:80/ >/dev/null 2>&1; then
+                echo "✅ Service is up and responding!"
+                break
+              fi
+              echo "Waiting for container health ($i/20)..."
+              sleep 2
+            done
+
+            echo "📊 Deployed Container Status:"
+            docker compose ps
+          REMOTE_SCRIPT
+
+      - name: Cleanup SSH Key
+        if: always()
+        run: rm -f ~/.ssh/id_deployer

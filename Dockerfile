@@ -1,17 +1,34 @@
-    # Stage 1: Build the React application
-    FROM node:22-alpine AS builder
+# Stage 1: Build the React application with Node 24
+FROM node:24-alpine AS builder
 
-    WORKDIR /app
+WORKDIR /app
 
-    COPY package*.json ./
-    # Temporarily disable SSL for npm due to certificate issues in container
-    RUN npm config set strict-ssl false && npm install
+# Build arguments for Vite environment configuration
+ARG VITE_TURNSTILE_SITE_KEY
+ENV VITE_TURNSTILE_SITE_KEY=$VITE_TURNSTILE_SITE_KEY
 
-    COPY . .
-    RUN npm run build
+# Copy dependency manifests
+COPY package*.json ./
 
-    # Stage 2: Serve the React application with Nginx
-    FROM nginx:stable-alpine
-    COPY --from=builder /app/dist /usr/share/nginx/html
-    EXPOSE 80
-    CMD ["nginx", "-g", "daemon off;"]
+# Install dependencies deterministically with strict integrity checking
+RUN npm ci
+
+# Copy source code and build production assets
+COPY . .
+RUN npm run build
+
+# Stage 2: Serve the production assets with hardened Nginx
+FROM nginx:stable-alpine
+
+# Remove default nginx static assets and configuration
+RUN rm -rf /usr/share/nginx/html/* /etc/nginx/conf.d/*
+
+# Copy hardened nginx security configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Copy production build from builder stage
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

@@ -1,2 +1,21 @@
 @import "tailwindcss";
 
+/* Modern Web Guidance: Validate Input After Interaction */
+input:user-invalid,
+textarea:user-invalid {
+  border-color: rgba(248, 113, 113, 0.8) !important;
+  background-color: rgba(239, 68, 68, 0.08) !important;
+}
+
+input:user-valid:not(:placeholder-shown),
+textarea:user-valid:not(:placeholder-shown) {
+  border-color: rgba(52, 211, 153, 0.6);
+}
+
+/* Seamless Turnstile integration with site dark aesthetics */
+div[id^="cf-turnstile"],
+.cf-turnstile,
+iframe[src*="challenges.cloudflare.com"] {
+  border-radius: 0.75rem !important;
+  max-width: 100% !important;
+}

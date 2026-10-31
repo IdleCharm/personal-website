@@ -1,14 +1,30 @@
 # Personal Website
 
-A modern personal website built with React, TypeScript, Vite, and styled with Tailwind CSS. This project showcases a responsive portfolio with components for hero section, about, skills, and social links.
+A modern personal website built with React 19, TypeScript, Vite 7, and styled with Tailwind CSS v4. This project showcases a responsive portfolio with sections for hero presentation, about me, skills, social links, and an interactive contact form protected by Cloudflare Turnstile.
 
 ## 🚀 Tech Stack
 
-- **Frontend**: React 24 with TypeScript
-- **Build Tool**: Vite 7
-- **Styling**: Tailwind CSS 4
-- **Linting**: ESLint with TypeScript support
-- **Deployment**: Docker with Nginx
+- **Runtime**: [Node.js 24+](https://nodejs.org/)
+- **Frontend**: [React 19.3+](https://react.dev/) with [TypeScript](https://www.typescriptlang.org/)
+- **Build Tool**: [Vite 7](https://vite.dev/)
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) via `@tailwindcss/vite`
+- **Bot Protection**: [Cloudflare Turnstile](https://developers.cloudflare.com/turnstile/) (`@marsidev/react-turnstile`)
+- **Linting**: ESLint flat config with TypeScript and React Hooks support
+- **Backend API**: Decoupled Rust backend service (`personal-api`) handling `/api/contact` and `/api/resume`
+- **Deployment**: Hardened multi-stage Docker container with Node 24 Alpine and secure Nginx
+
+## 🔒 Security Hardening
+
+- **0 Dependencies Vulnerabilities**: All dependencies and subdependencies audited with `found 0 vulnerabilities`.
+- **Hardened HTTP Headers**: Production Nginx is configured with:
+  - `Content-Security-Policy` restricting script, style, frame, and connect origins
+  - `X-Frame-Options: DENY` (anti-clickjacking)
+  - `X-Content-Type-Options: nosniff` (anti-MIME sniffing)
+  - `Referrer-Policy: strict-origin-when-cross-origin`
+  - `Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()`
+  - `server_tokens off;` (information hiding)
+- **External Links Protection**: Outbound external links use `noopener,noreferrer` to guard against reverse tabnabbing.
+- **Bot Verification**: Cloudflare Turnstile with assigned action `contact` and strict backend token verification.
 
 ## 🛠️ Development Setup
 
@@ -26,30 +42,39 @@ A modern personal website built with React, TypeScript, Vite, and styled with Ta
    cd personal-website
    ```
 
-2. **Install dependencies**
+2. **Configure environment variables**
+
+   Copy the example environment configuration:
+   ```bash
+   cp .env.example .env
+   ```
+
+3. **Install dependencies**
 
    ```bash
    npm install
    ```
 
-3. **Start the development server**
+4. **Start the development server**
 
    ```bash
    npm run dev
    ```
 
-   The application will be available at `http://localhost:5173`
+   The application will be available at `http://localhost:5173`. Requests to `/api/*` are automatically proxied to the backend at `http://localhost:3030`.
 
 ### Available Scripts
 
-- `npm run dev` - Start the development server with hot reload
-- `npm run build` - Build the project for production
+- `npm run dev` - Start the Vite development server with hot reload and API proxy
+- `npm run build` - Typecheck with TypeScript and build optimized assets for production
 - `npm run preview` - Preview the production build locally
-- `npm run lint` - Run ESLint to check code quality
+- `npm run lint` - Run ESLint over the project codebase
 
 ## 🐳 Docker Deployment
 
-This project includes Docker support for containerized deployment using a multi-stage build with Nginx.
+This project includes Docker support for containerized deployment using a secure multi-stage build:
+1. **Builder Stage**: Node.js 24 Alpine builds production bundles via `npm ci` and `npm run build`.
+2. **Production Stage**: Nginx Alpine serves static assets using the hardened `nginx.conf` security policy.
 
 ### Building the Docker Image
 
@@ -63,85 +88,33 @@ docker build -t personal-website .
 docker run -p 8080:80 personal-website
 ```
 
-The application will be available at `http://localhost:8080`
-
-### Docker Architecture
-
-The Dockerfile uses a two-stage build process:
-
-1. **Build Stage**: Uses Node.js 22 Alpine to build the React application
-2. **Production Stage**: Uses Nginx Alpine to serve the static files
-
-**Build optimization features:**
-
-- Multi-stage build reduces final image size
-- Only production assets are included in the final image
-- Nginx serves static files efficiently
-
-### Alternative Secure Dockerfile
-
-For environments with strict SSL requirements, use the secure Dockerfile:
-
-```bash
-docker build -f Dockerfile.secure -t personal-website-secure .
-```
+The application will be available at `http://localhost:8080`.
 
 ## 📁 Project Structure
 
 ```
 personal-website/
-├── public/
-│   ├── images/          # Static images
-│   └── vite.svg         # Vite logo
+├── public/              # Static public assets (favicons, manifest, images)
+│   ├── images/          # Profile and family photos
+│   └── manifest.json    # PWA web manifest
 ├── src/
-│   ├── components/      # React components
-│   │   ├── About.tsx
-│   │   ├── Hero.tsx
-│   │   ├── Skills.tsx
-│   │   ├── Socials.tsx
-│   │   ├── icons.tsx
-│   │   └── Loader.tsx
-│   ├── App.tsx          # Main application component
-│   ├── Context.tsx      # React context
-│   ├── main.tsx         # Application entry point
-│   └── *.css            # Styling files
-├── Dockerfile           # Docker configuration
-└── package.json         # Dependencies and scripts
+│   ├── components/      # React UI components
+│   │   ├── About.tsx    # Bio and core attributes
+│   │   ├── Contact.tsx  # Contact form with Cloudflare Turnstile
+│   │   ├── Hero.tsx     # Hero banner and call-to-actions
+│   │   ├── Icons.tsx    # SVG icons
+│   │   ├── Loader.tsx   # Loading spinner
+│   │   ├── Skills.tsx   # Skills competencies
+│   │   └── Socials.tsx  # Social buttons and navigation triggers
+│   ├── App.tsx          # Main root layout
+│   ├── index.css        # Global CSS & Tailwind directives
+│   └── main.tsx         # Application entry point
+├── Dockerfile           # Multi-stage Node 24 / Nginx Dockerfile
+├── nginx.conf           # Production Nginx security configuration
+├── GEMINI.md            # AI agent engineering manual
+├── package.json         # Dependencies and scripts (Node >=24, React 19.3+)
+└── vite.config.ts       # Vite config with API dev proxy
 ```
-
-## 🎨 Styling
-
-This project uses Tailwind CSS 4 with the Vite plugin for optimal development experience:
-
-- Utility-first CSS framework
-- Responsive design out of the box
-- Custom configuration in `tailwind.config.js`
-
-## 🔧 Configuration
-
-### TypeScript
-
-The project uses TypeScript with strict type checking:
-
-- `tsconfig.json` - Main TypeScript configuration
-- `tsconfig.app.json` - Application-specific settings
-- `tsconfig.node.json` - Node.js environment settings
-
-### ESLint
-
-ESLint is configured with TypeScript and React support:
-
-- Type-aware linting rules
-- React Hooks plugin
-- React Refresh plugin
-
-## 📝 Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/new-feature`
-3. Commit your changes: `git commit -am 'Add new feature'`
-4. Push to the branch: `git push origin feature/new-feature`
-5. Submit a pull request
 
 ## 📄 License
 

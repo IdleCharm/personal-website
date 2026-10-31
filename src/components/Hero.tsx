@@ -1,5 +1,6 @@
 import {
   AboutMeButton,
+  ContactMeButton,
   GitHubButton,
   LinkedInButton,
   MailButton,
@@ -31,6 +32,7 @@ export function Hero() {
         <div className="flex flex-wrap justify-center gap-4 mb-12">
           <AboutMeButton />
           <ResumeButton />
+          <ContactMeButton />
         </div>
         <div className="flex justify-center space-x-6">
           <GitHubButton />
